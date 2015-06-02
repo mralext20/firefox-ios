@@ -11,10 +11,10 @@ struct IntroViewControllerUX {
 
     static let NumberOfCards = 3
 
-    static let PagerCenterOffsetFromScrollViewBottom = 20
+    static let PagerCenterOffsetFromScrollViewBottom = 15
 
     static let StartBrowsingButtonTitle = NSLocalizedString("Start Browsing", tableName: "Intro", comment: "Do not translate yet")
-    static let StartBrowsingButtonColor = UIColor(red: 0.302, green: 0.314, blue: 0.333, alpha: 1.0)
+    static let StartBrowsingButtonColor = UIColor(rgb: 0x363B40)
     static let StartBrowsingButtonHeight = 66
     static let StartBrowsingButtonFont = UIFont.systemFontOfSize(18)
 
@@ -37,6 +37,10 @@ struct IntroViewControllerUX {
     static let FadeDuration = 0.25
 
     static let BackForwardButtonEdgeInset = 20
+
+    static let Card1Color = UIColor(rgb: 0xFFC81E)
+    static let Card2Color = UIColor(rgb: 0x41B450)
+    static let Card3Color = UIColor(rgb: 0x0096DD)
 }
 
 let IntroViewControllerSeenProfileKey = "IntroViewControllerSeen"
@@ -86,6 +90,7 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         }
 
         scrollView = UIScrollView()
+        scrollView.backgroundColor = IntroViewControllerUX.Card1Color
         scrollView.delegate = self
         scrollView.bounces = false
         scrollView.pagingEnabled = true
@@ -104,12 +109,14 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         }
 
         pageControl = UIPageControl()
+        pageControl.pageIndicatorTintColor = UIColor.blackColor().colorWithAlphaComponent(0.3)
+        pageControl.currentPageIndicatorTintColor = UIColor.blackColor()
         pageControl.numberOfPages = IntroViewControllerUX.NumberOfCards
 
         view.addSubview(pageControl)
         pageControl.snp_makeConstraints { (make) -> Void in
             make.centerX.equalTo(self.scrollView)
-            make.centerY.equalTo(self.scrollView.snp_bottom).offset(-IntroViewControllerUX.PagerCenterOffsetFromScrollViewBottom)
+            make.centerY.equalTo(self.startBrowsingButton.snp_top).offset(-IntroViewControllerUX.PagerCenterOffsetFromScrollViewBottom)
         }
 
         // Card1
@@ -245,6 +252,35 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         setActiveIntroView(introViews[page])
     }
 
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+        let maximumHorizontalOffset = scrollView.contentSize.width - CGRectGetWidth(scrollView.frame)
+        let currentHorizontalOffset = scrollView.contentOffset.x
+
+        var percentage = currentHorizontalOffset / maximumHorizontalOffset
+        var startColor: UIColor, endColor: UIColor
+
+        if(percentage < 0.5) {
+            startColor = IntroViewControllerUX.Card1Color
+            endColor = IntroViewControllerUX.Card2Color
+            percentage = percentage * 2
+        } else {
+            startColor = IntroViewControllerUX.Card2Color
+            endColor = IntroViewControllerUX.Card3Color
+            percentage = (percentage - 0.5) * 2
+        }
+
+        scrollView.backgroundColor = colorForPercentage(percentage, start: startColor, end: endColor)
+    }
+
+    private func colorForPercentage(percentage: CGFloat, start: UIColor, end: UIColor) -> UIColor {
+        let s = start.components
+        let e = end.components
+        let newRed   = (1.0 - percentage) * s.red   + percentage * e.red
+        let newGreen = (1.0 - percentage) * s.green + percentage * e.green
+        let newBlue  = (1.0 - percentage) * s.blue  + percentage * e.blue
+        return UIColor(red: newRed, green: newGreen, blue: newBlue, alpha: 1.0)
+    }
+
     private func setActiveIntroView(newIntroView: UIView) {
         if introView != newIntroView {
             UIView.animateWithDuration(IntroViewControllerUX.FadeDuration, animations: { () -> Void in
@@ -296,5 +332,16 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             make.center.equalTo(introView)
             make.width.equalTo(self.view.frame.width <= 320 ? 200 : 260) // TODO Talk to UX about small screen sizes
         }
+    }
+}
+
+extension UIColor {
+    var components:(red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
+        var r:CGFloat = 0
+        var g:CGFloat = 0
+        var b:CGFloat = 0
+        var a:CGFloat = 0
+        getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (r,g,b,a)
     }
 }
