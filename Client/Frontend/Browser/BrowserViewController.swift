@@ -230,7 +230,7 @@ class BrowserViewController: UIViewController {
 
     override func viewDidAppear(animated: Bool) {
         startTrackingAccessibilityStatus()
-        presentIntroViewController()
+        presentIntroViewController(force: true)
         super.viewDidAppear(animated)
     }
 

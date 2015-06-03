@@ -20,11 +20,11 @@ struct IntroViewControllerUX {
 
     static let SignInButtonTitle = NSLocalizedString("Sign in to Firefox", tableName: "Intro", comment: "Do not translate yet")
     static let SignInButtonColor = UIColor(red: 0.259, green: 0.49, blue: 0.831, alpha: 1.0)
-    static let SignInButtonHeight = 66
+    static let SignInButtonHeight = 46
     static let SignInButtonFont = UIFont.systemFontOfSize(20)
     static let SignInButtonCornerRadius = CGFloat(10)
 
-    static let CardTextFont = UIFont.systemFontOfSize(20)
+    static let CardTextFont = UIFont.systemFontOfSize(16)
 
     static let Card1Text = NSLocalizedString("Browse the web with multiple tabs just like you’re used to.", tableName: "Intro", comment: "Do not translate yet.")
 
@@ -59,6 +59,7 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
 
     var startBrowsingButton: UIButton!
     var introView: UIView?
+    var slideContainer: UIView!
     var scrollView: UIScrollView!
     var pageControl: UIPageControl!
     var backButton: UIButton!
@@ -90,22 +91,26 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         }
 
         scrollView = UIScrollView()
-        scrollView.backgroundColor = IntroViewControllerUX.Card1Color
+        scrollView.backgroundColor = UIColor.clearColor()
         scrollView.delegate = self
         scrollView.bounces = false
         scrollView.pagingEnabled = true
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.contentSize = CGSize(width: scaledWidthOfSlide * CGFloat(IntroViewControllerUX.NumberOfCards), height: scaledHeightOfSlide)
         view.addSubview(scrollView)
-        scrollView.snp_makeConstraints { (make) -> Void in
-            make.left.right.top.equalTo(self.view)
-            make.height.equalTo(self.scaledHeightOfSlide)
-        }
 
+        slideContainer = UIView()
+        slideContainer.backgroundColor = IntroViewControllerUX.Card1Color
         for i in 0..<IntroViewControllerUX.NumberOfCards {
             let imageView = UIImageView(frame: CGRect(x: CGFloat(i)*scaledWidthOfSlide, y: 0, width: scaledWidthOfSlide, height: scaledHeightOfSlide))
             imageView.image = slides[i]
-            scrollView.addSubview(imageView)
+            slideContainer.addSubview(imageView)
+        }
+
+        scrollView.addSubview(slideContainer)
+        scrollView.snp_makeConstraints { (make) -> Void in
+            make.left.right.top.equalTo(self.view)
+            make.bottom.equalTo(startBrowsingButton.snp_top)
         }
 
         pageControl = UIPageControl()
@@ -173,14 +178,16 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             introView.alpha = 0
             self.view.addSubview(introView)
             introView.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.scrollView.snp_bottom)
+                make.top.equalTo(self.slideContainer.snp_bottom)
                 make.bottom.equalTo(self.startBrowsingButton.snp_top)
                 make.left.right.equalTo(self.view)
             }
         }
 
-        // Activate the first card
+        // Make whoe screen scrollable
+        view.bringSubviewToFront(scrollView)
 
+        // Activate the first card
         setActiveIntroView(introViews[0])
     }
 
@@ -189,15 +196,16 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
 
         scrollView.snp_remakeConstraints { (make) -> Void in
             make.left.right.top.equalTo(self.view)
-            make.height.equalTo(self.scaledHeightOfSlide)
+            make.bottom.equalTo(startBrowsingButton.snp_top)
         }
 
         for i in 0..<IntroViewControllerUX.NumberOfCards {
-            if let imageView = scrollView.subviews[i] as? UIImageView {
+            if let imageView = slideContainer.subviews[i] as? UIImageView {
                 imageView.frame = CGRect(x: CGFloat(i)*scaledWidthOfSlide, y: 0, width: scaledWidthOfSlide, height: scaledHeightOfSlide)
             }
         }
-        scrollView.contentSize = CGSize(width: scaledWidthOfSlide * CGFloat(IntroViewControllerUX.NumberOfCards), height: scaledHeightOfSlide)
+        slideContainer.frame = CGRect(x: 0, y: 0, width: scaledWidthOfSlide * CGFloat(IntroViewControllerUX.NumberOfCards), height: scaledHeightOfSlide)
+        scrollView.contentSize = CGSize(width: slideContainer.frame.width, height: slideContainer.frame.height)
     }
 
     override func prefersStatusBarHidden() -> Bool {
@@ -269,7 +277,7 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             percentage = (percentage - 0.5) * 2
         }
 
-        scrollView.backgroundColor = colorForPercentage(percentage, start: startColor, end: endColor)
+        slideContainer.backgroundColor = colorForPercentage(percentage, start: startColor, end: endColor)
     }
 
     private func colorForPercentage(percentage: CGFloat, start: UIColor, end: UIColor) -> UIColor {
