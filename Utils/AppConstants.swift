@@ -16,6 +16,7 @@ public struct AppConstants {
     static let DefaultRowHeight: CGFloat = 58
     static let DefaultPadding: CGFloat = 10
 
+    static let DefaultMediumBoldFont = UIFont(name: UIAccessibilityIsBoldTextEnabled() ? "HelveticaNeue-Bold" : "HelveticaNeue", size: 13)
     static let DefaultMediumFont = UIFont(name: UIAccessibilityIsBoldTextEnabled() ? "HelveticaNeue-Medium" : "HelveticaNeue", size: 13)
     static let DefaultSmallFontSize: CGFloat = 11
     static let DefaultSmallFont = UIFont(name: UIAccessibilityIsBoldTextEnabled() ? "HelveticaNeue-Medium" : "HelveticaNeue", size: DefaultSmallFontSize)
@@ -32,7 +33,7 @@ public struct AppConstants {
     static let BackgroundColor = UIColor(red: 0.21, green: 0.23, blue: 0.25, alpha: 1)
 
     // Firefox Orange
-    static let ControlTintColor = UIColor(red: 255.0 / 255, green: 149.0 / 255, blue: 0.0 / 255, alpha: 1)
+    static let ControlTintColor = UIColor(red: 240.0 / 255, green: 105.0 / 255, blue: 31.0 / 255, alpha: 1)
 
 #if MOZ_CHANNEL_AURORA
     static let BuildChannel = AppBuildChannel.Aurora
