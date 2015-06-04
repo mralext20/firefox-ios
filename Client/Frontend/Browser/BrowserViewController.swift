@@ -1071,9 +1071,13 @@ extension BrowserViewController: TabManagerDelegate {
         if let wv = previous?.webView {
             wv.accessibilityLabel = nil
             wv.accessibilityElementsHidden = true
+            wv.scrollView.hidden = true
         }
 
         if let webView = selected?.webView {
+            if webView.scrollView.hidden {
+                webView.scrollView.hidden = false
+            }
             webViewContainer.addSubview(webView)
             webView.accessibilityLabel = NSLocalizedString("Web content", comment: "Accessibility label for the main web content view")
             webView.accessibilityElementsHidden = false
@@ -1126,6 +1130,7 @@ extension BrowserViewController: TabManagerDelegate {
     }
 
     func tabManager(tabManager: TabManager, didCreateTab tab: Browser) {
+        println("Did create tab")
     }
 
     func tabManager(tabManager: TabManager, didAddTab tab: Browser, atIndex: Int) {
