@@ -18,6 +18,8 @@ private struct RemoteTabsPanelUX {
     static let HeaderHeight: CGFloat = SiteTableViewControllerUX.RowHeight // Not HeaderHeight!
     static let RowHeight: CGFloat = SiteTableViewControllerUX.RowHeight
     static let HeaderBackgroundColor = UIColor(rgb: 0xf8f8f8)
+
+    static let EmptyStateTopPadding: CGFloat = 20
 }
 
 private let RemoteClientIdentifier = "RemoteClient"
@@ -47,20 +49,130 @@ class RemoteTabsPanel: UITableViewController, HomePanel {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
         tableView.registerClass(TwoLineHeaderFooterView.self, forHeaderFooterViewReuseIdentifier: RemoteClientIdentifier)
         tableView.registerClass(TwoLineTableViewCell.self, forCellReuseIdentifier: RemoteTabIdentifier)
         tableView.rowHeight = RemoteTabsPanelUX.RowHeight
         tableView.separatorInset = UIEdgeInsetsZero
-
-        view.backgroundColor = AppConstants.PanelBackgroundColor
-
         refreshControl = UIRefreshControl()
         refreshControl?.addTarget(self, action: "SELrefresh", forControlEvents: UIControlEvents.ValueChanged)
+
+        view.backgroundColor = AppConstants.PanelBackgroundColor
     }
 
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
-        self.SELrefresh()
+
+        if profile.getAccount() == nil {
+            setupNoAccountOverlayView()
+        } else {
+            removeNoAccountOverlayView()
+            self.SELrefresh()
+        }
+    }
+
+    var noAccountOverlayView: UIView?
+
+    private func setupNoAccountOverlayView() {
+        if noAccountOverlayView == nil {
+            tableView.scrollEnabled = false
+
+            let overlayView = UIView(frame: tableView.bounds)
+            view.addSubview(overlayView)
+            overlayView.backgroundColor = UIColor.whiteColor()
+            // Unknown why this does not work with autolayout
+            overlayView.autoresizingMask = UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleWidth
+
+            let containerView = UIView()
+            //containerView.backgroundColor = UIColor.yellowColor()
+            overlayView.addSubview(containerView)
+
+            let imageView = UIImageView()
+            imageView.image = UIImage(named: "emptySync")
+            containerView.addSubview(imageView)
+            imageView.snp_makeConstraints { (make) -> Void in
+                make.top.equalTo(containerView)
+                make.centerX.equalTo(containerView)
+            }
+
+            let titleLabel = UILabel()
+            titleLabel.font = UIFont.boldSystemFontOfSize(15)
+            titleLabel.text = NSLocalizedString("Welcome to Sync", comment: "See http://mzl.la/1Qtkf0j")
+            titleLabel.textAlignment = NSTextAlignment.Center
+            titleLabel.textColor = UIColor.darkGrayColor()
+            containerView.addSubview(titleLabel)
+            titleLabel.snp_makeConstraints({ (make) -> Void in
+                make.top.equalTo(imageView.snp_bottom).offset(8)
+                make.centerX.equalTo(containerView)
+            })
+
+            let instructionsLabel = UILabel()
+            instructionsLabel.font = UIFont.systemFontOfSize(15)
+            instructionsLabel.text = NSLocalizedString("Sign in to sync your tabs, bookmarks, passwords, & more.", comment: "See http://mzl.la/1Qtkf0j")
+            instructionsLabel.textAlignment = NSTextAlignment.Center
+            instructionsLabel.textColor = UIColor.grayColor()
+            instructionsLabel.numberOfLines = 0
+            containerView.addSubview(instructionsLabel)
+            instructionsLabel.snp_makeConstraints({ (make) -> Void in
+                make.top.equalTo(titleLabel.snp_bottom).offset(8)
+                make.centerX.equalTo(containerView)
+                make.width.equalTo(256)
+            })
+
+            let signInButton = UIButton()
+            signInButton.backgroundColor = IntroViewControllerUX.SignInButtonColor
+            signInButton.setTitle(NSLocalizedString("Sign in to Firefox", tableName: "Intro", comment: "See http://mzl.la/1Qtkf0j"), forState: .Normal)
+            signInButton.setTitleColor(UIColor.whiteColor(), forState: .Normal)
+            signInButton.titleLabel?.font = IntroViewControllerUX.SignInButtonFont
+            signInButton.layer.cornerRadius = 6
+            signInButton.clipsToBounds = true
+            signInButton.addTarget(self, action: "SELsignIn", forControlEvents: UIControlEvents.TouchUpInside)
+            containerView.addSubview(signInButton)
+            signInButton.snp_makeConstraints { (make) -> Void in
+                make.centerX.equalTo(containerView)
+                make.top.equalTo(instructionsLabel.snp_bottom).offset(8)
+                make.height.equalTo(56)
+                make.width.equalTo(272)
+            }
+
+            let createAnAccountButton = UIButton.buttonWithType(UIButtonType.System) as! UIButton
+            createAnAccountButton.setTitle(NSLocalizedString("Create an account", comment: "See http://mzl.la/1Qtkf0j"), forState: .Normal)
+            createAnAccountButton.titleLabel?.font = UIFont.systemFontOfSize(12)
+            createAnAccountButton.addTarget(self, action: "SELcreateAnAccount", forControlEvents: UIControlEvents.TouchUpInside)
+            containerView.addSubview(createAnAccountButton)
+            createAnAccountButton.snp_makeConstraints({ (make) -> Void in
+                make.centerX.equalTo(containerView)
+                make.top.equalTo(signInButton.snp_bottom).offset(8)
+            })
+
+            containerView.snp_makeConstraints({ (make) -> Void in
+                // Let the container wrap around the content
+                make.top.equalTo(imageView.snp_top)
+                make.bottom.equalTo(createAnAccountButton)
+                make.left.equalTo(signInButton)
+                make.right.equalTo(signInButton)
+                // And then center it in the overlay view that sits on top of the UITableView
+                make.center.equalTo(overlayView)
+            })
+
+            noAccountOverlayView = overlayView
+        }
+    }
+
+    private func removeNoAccountOverlayView() {
+        if let overlayView = noAccountOverlayView {
+            tableView.scrollEnabled = true
+            overlayView.removeFromSuperview()
+            noAccountOverlayView = nil
+        }
+    }
+
+    @objc private func SELsignIn() {
+        homePanelDelegate?.homePanelDidRequestToSignIn(self)
+    }
+
+    @objc private func SELcreateAnAccount() {
+        homePanelDelegate?.homePanelDidRequestToCreateAccount(self)
     }
 
     @objc private func SELrefresh() {
